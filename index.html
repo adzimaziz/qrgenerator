@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="QR Studio - Generate beautiful, customizable QR codes in 6 stunning design styles. Free, fast, and works entirely in your browser.">
+    <meta name="keywords" content="QR code generator, QR code designer, custom QR codes, beautiful QR codes">
+    <meta name="author" content="QR Studio">
+    <title>QR Studio - Beautiful QR Code Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background: rgba(79, 70, 229, 0.4);
+            color: #e0e7ff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #4f46e5, #7c3aed);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 70, 229, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.5), 0 0 60px rgba(79, 70, 229, 0.2); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(1); opacity: 0.15; }
+            50% { transform: scale(1.5); opacity: 0.35; }
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .app-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2e 25%, #0a0a1a 50%, #1a0a2e 75%, #0a0a1a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            text-align: center;
+            padding: 3rem 1.5rem 2rem;
+            position: relative;
+        }
+
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899, #4f46e5);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease infinite;
+            letter-spacing: -1px;
+        }
+
+        .logo-icon {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 12px;
+            margin-right: 12px;
+            vertical-align: middle;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+        }
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 8px;
+            width: 12px; height: 12px;
+            background: white;
+            border-radius: 3px;
+        }
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            bottom: 8px; right: 8px;
+            width: 12px; height: 12px;
+            background: white;
+            border-radius: 3px;
+        }
+
+        .tagline {
+            font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+            color: #94a3b8;
+            margin-top: 0.5rem;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== GLASSMORPHISM CARD ===== */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(79, 70, 229, 0.3);
+            box-shadow: 0 8px 40px rgba(79, 70, 229, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* ===== INPUT SECTION ===== */
+        .input-section {
+            max-width: 680px;
+            margin: 0 auto 3rem;
+            padding: 0 1.5rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .input-card {
+            padding: 2.5rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+            transition: color 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-field::placeholder {
+            color: #475569;
+        }
+
+        .input-field:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15), 0 0 20px rgba(79, 70, 229, 0.1);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .input-field:focus + .input-icon,
+        .input-field:focus ~ .input-icon {
+            color: #818cf8;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(79, 70, 229, 0.4), 0 0 60px rgba(124, 58, 237, 0.15);
+            animation: pulseGlow 2s ease infinite;
+        }
+
+        .generate-btn:hover::before {
+            left: 100%;
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn .btn-icon {
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* ===== ERROR MESSAGE ===== */
+        .error-msg {
+            color: #f87171;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+            padding-left: 4px;
+        }
+
+        .error-msg.visible {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        /* ===== GALLERY ===== */
+        .gallery-section {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 1.5rem 4rem;
+        }
+
+        .gallery-title {
+            text-align: center;
+            font-size: clamp(1.5rem, 3.5vw, 2rem);
+            margin-bottom: 2rem;
+            color: #e2e8f0;
+            display: none;
+        }
+
+        .gallery-title.visible {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.75rem;
+        }
+
+        @media (max-width: 1024px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+                margin: 0 auto;
+            }
+            .input-card {
+                padding: 1.75rem;
+            }
+        }
+
+        .qr-card {
+            padding: 1.75rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .qr-card.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .qr-card canvas {
+            border-radius: 12px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .qr-style-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            color: #c7d2fe;
+            letter-spacing: 0.3px;
+        }
+
+        .qr-user-title {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 1rem;
+            padding: 10px 22px;
+            background: rgba(79, 70, 229, 0.12);
+            color: #a5b4fc;
+            border: 1px solid rgba(79, 70, 229, 0.25);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: rgba(79, 70, 229, 0.25);
+            border-color: rgba(79, 70, 229, 0.5);
+            color: #c7d2fe;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            color: #475569;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        footer .heart {
+            color: #ec4899;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* ===== HIDDEN UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+    <div class="app-wrapper">
+        <!-- HEADER -->
+        <header>
+            <h1>
+                <span class="logo-icon" aria-hidden="true"></span>
+                <span class="logo">QR Studio</span>
+            </h1>
+            <p class="tagline">Generate beautiful QR codes in seconds</p>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main>
+            <!-- INPUT SECTION -->
+            <section class="input-section" aria-label="QR Code Input">
+                <div class="glass-card input-card">
+                    <div class="input-group">
+                        <input
+                            type="url"
+                            id="url-input"
+                            class="input-field"
+                            placeholder="Paste your URL here..."
+                            autocomplete="url"
+                            aria-label="URL to encode"
+                        >
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                    </div>
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            id="title-input"
+                            class="input-field"
+                            placeholder="Give it a title (optional)..."
+                            maxlength="60"
+                            aria-label="QR code title"
+                        >
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                            <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                    </div>
+                    <p class="error-msg" id="error-msg" role="alert">Please enter a valid URL to generate QR codes.</p>
+                    <button type="button" id="generate-btn" class="generate-btn" aria-label="Generate QR Codes">
+                        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                        </svg>
+                        Generate QR Codes
+                    </button>
+                </div>
+            </section>
+
+            <!-- GALLERY -->
+            <section class="gallery-section" aria-label="QR Code Designs">
+                <h2 class="gallery-title" id="gallery-title">Your QR Code Designs</h2>
+                <div class="gallery-grid" id="gallery-grid">
+                    <!-- Classic -->
+                    <article class="glass-card qr-card" id="card-classic">
+                        <canvas id="canvas-classic" width="400" height="450"></canvas>
+                        <p class="qr-style-name">Classic</p>
+                        <p class="qr-user-title" id="title-classic"></p>
+                        <button type="button" class="download-btn" data-style="classic" aria-label="Download Classic QR Code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PNG
+                        </button>
+                    </article>
+                    <!-- Gradient -->
+                    <article class="glass-card qr-card" id="card-gradient">
+                        <canvas id="canvas-gradient" width="400" height="450"></canvas>
+                        <p class="qr-style-name">Gradient</p>
+                        <p class="qr-user-title" id="title-gradient"></p>
+                        <button type="button" class="download-btn" data-style="gradient" aria-label="Download Gradient QR Code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PNG
+                        </button>
+                    </article>
+                    <!-- Rounded -->
+                    <article class="glass-card qr-card" id="card-rounded">
+                        <canvas id="canvas-rounded" width="400" height="450"></canvas>
+                        <p class="qr-style-name">Rounded</p>
+                        <p class="qr-user-title" id="title-rounded"></p>
+                        <button type="button" class="download-btn" data-style="rounded" aria-label="Download Rounded QR Code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PNG
+                        </button>
+                    </article>
+                    <!-- Neon Glow -->
+                    <article class="glass-card qr-card" id="card-neon">
+                        <canvas id="canvas-neon" width="400" height="450"></canvas>
+                        <p class="qr-style-name">Neon Glow</p>
+                        <p class="qr-user-title" id="title-neon"></p>
+                        <button type="button" class="download-btn" data-style="neon" aria-label="Download Neon Glow QR Code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PNG
+                        </button>
+                    </article>
+                    <!-- Elegant -->
+                    <article class="glass-card qr-card" id="card-elegant">
+                        <canvas id="canvas-elegant" width="400" height="450"></canvas>
+                        <p class="qr-style-name">Elegant</p>
+                        <p class="qr-user-title" id="title-elegant"></p>
+                        <button type="button" class="download-btn" data-style="elegant" aria-label="Download Elegant QR Code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PNG
+                        </button>
+                    </article>
+                    <!-- Minimal -->
+                    <article class="glass-card qr-card" id="card-minimal">
+                        <canvas id="canvas-minimal" width="400" height="450"></canvas>
+                        <p class="qr-style-name">Minimal</p>
+                        <p class="qr-user-title" id="title-minimal"></p>
+                        <button type="button" class="download-btn" data-style="minimal" aria-label="Download Minimal QR Code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PNG
+                        </button>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer>
+            <p>Made with <span class="heart" aria-label="love">&#9829;</span> by QR Studio &mdash; Free &amp; Open Source</p>
+        </footer>
+    </div>
+
+    <!-- QR Code Generator Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
+    <script>
+    (function () {
+        'use strict';
+
+        /* ===== PARTICLE BACKGROUND ===== */
+        const particleCanvas = document.getElementById('particles-canvas');
+        const pCtx = particleCanvas.getContext('2d');
+        let particles = [];
+        const PARTICLE_COUNT = 60;
+
+        function resizeParticleCanvas() {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push({
+                    x: Math.random() * particleCanvas.width,
+                    y: Math.random() * particleCanvas.height,
+                    radius: Math.random() * 2 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    alpha: Math.random() * 0.25 + 0.05
+                });
+            }
+        }
+
+        function animateParticles() {
+            pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0) p.x = particleCanvas.width;
+                if (p.x > particleCanvas.width) p.x = 0;
+                if (p.y < 0) p.y = particleCanvas.height;
+                if (p.y > particleCanvas.height) p.y = 0;
+                pCtx.beginPath();
+                pCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                pCtx.fillStyle = `rgba(124, 58, 237, ${p.alpha})`;
+                pCtx.fill();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        resizeParticleCanvas();
+        createParticles();
+        animateParticles();
+        window.addEventListener('resize', () => { resizeParticleCanvas(); createParticles(); });
+
+        /* ===== DOM REFERENCES ===== */
+        const urlInput = document.getElementById('url-input');
+        const titleInput = document.getElementById('title-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const errorMsg = document.getElementById('error-msg');
+        const galleryTitle = document.getElementById('gallery-title');
+        const cards = document.querySelectorAll('.qr-card');
+
+        const styles = ['classic', 'gradient', 'rounded', 'neon', 'elegant', 'minimal'];
+
+        /* ===== GENERATE ===== */
+        generateBtn.addEventListener('click', handleGenerate);
+        urlInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') handleGenerate();
+        });
+
+        function handleGenerate() {
+            const url = urlInput.value.trim();
+            const title = titleInput.value.trim() || '';
+
+            // Validate
+            if (!url) {
+                errorMsg.textContent = 'Please enter a URL to generate QR codes.';
+                errorMsg.classList.add('visible');
+                urlInput.focus();
+                return;
+            }
+
+            errorMsg.classList.remove('visible');
+
+            // Generate QR data
+            let qr;
+            try {
+                qr = qrcode(0, 'M');
+                qr.addData(url);
+                qr.make();
+            } catch (err) {
+                errorMsg.textContent = 'Failed to generate QR code. The URL may be too long.';
+                errorMsg.classList.add('visible');
+                return;
+            }
+
+            // Render each style
+            styles.forEach((style, index) => {
+                renderQR(style, qr, title);
+                // Update title labels
+                const titleEl = document.getElementById('title-' + style);
+                if (titleEl) titleEl.textContent = title;
+            });
+
+            // Show gallery with staggered animation
+            galleryTitle.classList.add('visible');
+            cards.forEach((card, i) => {
+                card.classList.remove('visible');
+                setTimeout(() => {
+                    card.classList.add('visible');
+                }, 100 + i * 120);
+            });
+
+            // Scroll to gallery
+            setTimeout(() => {
+                galleryTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        }
+
+        /* ===== QR RENDERERS ===== */
+        function renderQR(style, qr, title) {
+            const canvas = document.getElementById('canvas-' + style);
+            const ctx = canvas.getContext('2d');
+            const W = 400;
+            const QR_AREA = 400;
+            const TITLE_AREA = 50;
+            const H = QR_AREA + TITLE_AREA;
+
+            canvas.width = W;
+            canvas.height = H;
+
+            const moduleCount = qr.getModuleCount();
+            const quietZone = 4; // modules of quiet zone
+            const totalModules = moduleCount + quietZone * 2;
+            const cellSize = QR_AREA / totalModules;
+
+            switch (style) {
+                case 'classic':
+                    renderClassic(ctx, qr, moduleCount, cellSize, quietZone, W, QR_AREA, title);
+                    break;
+                case 'gradient':
+                    renderGradient(ctx, qr, moduleCount, cellSize, quietZone, W, QR_AREA, title);
+                    break;
+                case 'rounded':
+                    renderRounded(ctx, qr, moduleCount, cellSize, quietZone, W, QR_AREA, title);
+                    break;
+                case 'neon':
+                    renderNeon(ctx, qr, moduleCount, cellSize, quietZone, W, QR_AREA, title);
+                    break;
+                case 'elegant':
+                    renderElegant(ctx, qr, moduleCount, cellSize, quietZone, W, QR_AREA, H, title);
+                    break;
+                case 'minimal':
+                    renderMinimal(ctx, qr, moduleCount, cellSize, quietZone, W, QR_AREA, title);
+                    break;
+            }
+        }
+
+        /* --- Classic --- */
+        function renderClassic(ctx, qr, mc, cs, qz, W, QA, title) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, QA + 50);
+            ctx.fillStyle = '#000000';
+            for (let r = 0; r < mc; r++) {
+                for (let c = 0; c < mc; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillRect((c + qz) * cs, (r + qz) * cs, cs, cs);
+                    }
+                }
+            }
+            // Title
+            if (title) {
+                ctx.fillStyle = '#000000';
+                ctx.font = '600 16px "Space Grotesk", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(truncateText(ctx, title, W - 40), W / 2, QA + 25);
+            }
+        }
+
+        /* --- Gradient --- */
+        function renderGradient(ctx, qr, mc, cs, qz, W, QA, title) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, QA + 50);
+            const grad = ctx.createLinearGradient(0, 0, W, QA);
+            grad.addColorStop(0, '#4f46e5');
+            grad.addColorStop(0.5, '#7c3aed');
+            grad.addColorStop(1, '#ec4899');
+            ctx.fillStyle = grad;
+            for (let r = 0; r < mc; r++) {
+                for (let c = 0; c < mc; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillRect((c + qz) * cs, (r + qz) * cs, cs, cs);
+                    }
+                }
+            }
+            if (title) {
+                const tGrad = ctx.createLinearGradient(W * 0.2, 0, W * 0.8, 0);
+                tGrad.addColorStop(0, '#4f46e5');
+                tGrad.addColorStop(1, '#7c3aed');
+                ctx.fillStyle = tGrad;
+                ctx.font = '600 16px "Space Grotesk", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(truncateText(ctx, title, W - 40), W / 2, QA + 25);
+            }
+        }
+
+        /* --- Rounded --- */
+        function renderRounded(ctx, qr, mc, cs, qz, W, QA, title) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, QA + 50);
+            ctx.fillStyle = '#1e1b4b';
+            const radius = cs * 0.45;
+            for (let r = 0; r < mc; r++) {
+                for (let c = 0; c < mc; c++) {
+                    if (qr.isDark(r, c)) {
+                        const cx = (c + qz) * cs + cs / 2;
+                        const cy = (r + qz) * cs + cs / 2;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            if (title) {
+                ctx.fillStyle = '#1e1b4b';
+                ctx.font = '600 16px "Space Grotesk", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(truncateText(ctx, title, W - 40), W / 2, QA + 25);
+            }
+        }
+
+        /* --- Neon Glow --- */
+        function renderNeon(ctx, qr, mc, cs, qz, W, QA, title) {
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(0, 0, W, QA + 50);
+            ctx.shadowColor = '#00ffd5';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#00ffd5';
+            for (let r = 0; r < mc; r++) {
+                for (let c = 0; c < mc; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillRect((c + qz) * cs, (r + qz) * cs, cs, cs);
+                    }
+                }
+            }
+            ctx.shadowBlur = 0;
+            if (title) {
+                ctx.fillStyle = '#00ffd5';
+                ctx.shadowColor = '#00ffd5';
+                ctx.shadowBlur = 10;
+                ctx.font = '600 16px "Space Grotesk", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(truncateText(ctx, title, W - 40), W / 2, QA + 25);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        /* --- Elegant --- */
+        function renderElegant(ctx, qr, mc, cs, qz, W, QA, H, title) {
+            // Cream background
+            ctx.fillStyle = '#fdf6e3';
+            ctx.fillRect(0, 0, W, H);
+
+            // Decorative double-line border
+            const borderOuter = 12;
+            const borderInner = 18;
+            ctx.strokeStyle = '#1a1a2e';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(borderOuter, borderOuter, W - borderOuter * 2, H - borderOuter * 2);
+            ctx.strokeStyle = '#c9b97a';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(borderInner, borderInner, W - borderInner * 2, H - borderInner * 2);
+
+            // Corner ornaments
+            const ornSize = 8;
+            ctx.fillStyle = '#c9b97a';
+            // top-left
+            ctx.fillRect(borderInner - 1, borderInner - 1, ornSize, 2);
+            ctx.fillRect(borderInner - 1, borderInner - 1, 2, ornSize);
+            // top-right
+            ctx.fillRect(W - borderInner - ornSize + 1, borderInner - 1, ornSize, 2);
+            ctx.fillRect(W - borderInner - 1, borderInner - 1, 2, ornSize);
+            // bottom-left
+            ctx.fillRect(borderInner - 1, H - borderInner - 1, ornSize, 2);
+            ctx.fillRect(borderInner - 1, H - borderInner - ornSize + 1, 2, ornSize);
+            // bottom-right
+            ctx.fillRect(W - borderInner - ornSize + 1, H - borderInner - 1, ornSize, 2);
+            ctx.fillRect(W - borderInner - 1, H - borderInner - ornSize + 1, 2, ornSize);
+
+            // QR modules
+            ctx.fillStyle = '#1a1a2e';
+            for (let r = 0; r < mc; r++) {
+                for (let c = 0; c < mc; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillRect((c + qz) * cs, (r + qz) * cs, cs, cs);
+                    }
+                }
+            }
+
+            // Title in serif
+            if (title) {
+                ctx.fillStyle = '#1a1a2e';
+                ctx.font = 'italic 600 16px Georgia, "Times New Roman", serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(truncateText(ctx, title, W - 60), W / 2, QA + 25);
+            }
+        }
+
+        /* --- Minimal --- */
+        function renderMinimal(ctx, qr, mc, cs, qz, W, QA, title) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, QA + 50);
+
+            // Extra padding for minimal style
+            const extraPad = 3;
+            const totalMods = mc + (qz + extraPad) * 2;
+            const minCS = QA / totalMods;
+            const offset = qz + extraPad;
+
+            ctx.fillStyle = '#666666';
+            for (let r = 0; r < mc; r++) {
+                for (let c = 0; c < mc; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillRect((c + offset) * minCS, (r + offset) * minCS, minCS, minCS);
+                    }
+                }
+            }
+
+            if (title) {
+                ctx.fillStyle = '#999999';
+                ctx.font = '400 14px "Inter", -apple-system, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(truncateText(ctx, title, W - 60), W / 2, QA + 25);
+            }
+        }
+
+        /* ===== HELPERS ===== */
+        function truncateText(ctx, text, maxWidth) {
+            if (ctx.measureText(text).width <= maxWidth) return text;
+            let t = text;
+            while (t.length > 0 && ctx.measureText(t + '…').width > maxWidth) {
+                t = t.slice(0, -1);
+            }
+            return t + '…';
+        }
+
+        function sanitizeFilename(str) {
+            return str.replace(/[^a-z0-9_-]/gi, '_').substring(0, 50) || 'qr';
+        }
+
+        /* ===== DOWNLOAD ===== */
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const style = this.dataset.style;
+                const canvas = document.getElementById('canvas-' + style);
+                const title = titleInput.value.trim();
+                const filename = `qr-${style}-${sanitizeFilename(title || 'code')}.png`;
+
+                canvas.toBlob(function (blob) {
+                    if (!blob) return;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                }, 'image/png');
+            });
+        });
+
+    })();
+    </script>
+</body>
+</html>
